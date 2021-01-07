@@ -24,7 +24,11 @@ dependencies:
   flutter:
     sdk: flutter
   intl:
+  dio: ^3.0.10
+  rxdart: ^0.25.0 
   http: ^0.12.2
+  auto_size_text: ^2.1.0
+  infinite_scroll_pagination: ^2.2.3
 
 
   # The following adds the Cupertino Icons font to your application.
