@@ -1,6 +1,6 @@
 import 'package:desafio_tecnico_flutter/pages/home_page/home_page.dart';
+import 'package:desafio_tecnico_flutter/widgets/keyboard_hider.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 void main() {
   runApp(MyApp());
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomePage(),
+      home: KeyboardHider(child: HomePage()),
     );
   }
 }

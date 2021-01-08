@@ -1,11 +1,11 @@
 import 'package:desafio_tecnico_flutter/models/genre_model.dart';
 
-class GenresModel {
+class GenresResponseModel {
   List<Genre> genres;
 
-  GenresModel({this.genres});
+  GenresResponseModel({this.genres});
 
-  GenresModel.fromJson(Map<String, dynamic> json) {
+  GenresResponseModel.fromJson(Map<String, dynamic> json) {
     if (json['genres'] != null) {
       genres = new List<Genre>();
       json['genres'].forEach((v) {

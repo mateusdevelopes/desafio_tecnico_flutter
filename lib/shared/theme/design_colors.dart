@@ -18,6 +18,7 @@ class DesignColors {
   static MaterialColor COR_TEMA = MaterialColor(0xff005a87, color);
   // ignore: non_constant_identifier_names
   static MaterialColor COR_CINZA_TEMA = MaterialColor(0xff888888, color);
-  
+
   static const Color COR_BACKGROUND = Color(0xffEBE9FE);
+  static const Color COR_GENRE_TOGGLE = Color(0xff00384C);
 }
