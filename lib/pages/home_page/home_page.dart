@@ -152,13 +152,14 @@ class _HomePageState extends State<HomePage> {
                                   MaterialPageRoute(
                                     builder: (context) => DetailsPage(
                                       title: snapshot.data[index].title,
+                                      poster: snapshot.data[index].poster,
                                     ),
                                   ),
                                 );
                               },
                               radius: 10,
                               child: Hero(
-                                tag: '${snapshot.data[index].title}',
+                                tag: 'tag' + snapshot.data[index].title,
                                 child: Container(
                                   height: 600,
                                   width: width,
