@@ -21,4 +21,6 @@ class DesignColors {
 
   static const Color COR_BACKGROUND = Color(0xffEBE9FE);
   static const Color COR_GENRE_TOGGLE = Color(0xff00384C);
+  static const Color COLOR_WHITE_DARK = Color(0xffF5F5F5);
+  static const Color COLOR_LIGHT_BLUE = Color(0xffF1F3F5);
 }

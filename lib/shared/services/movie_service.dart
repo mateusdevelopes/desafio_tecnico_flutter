@@ -1,10 +1,8 @@
-import 'package:desafio_tecnico_flutter/models/genre_model.dart';
 import 'package:desafio_tecnico_flutter/models/genres_response_model.dart';
+import 'package:desafio_tecnico_flutter/models/movie_model.dart';
 import 'package:desafio_tecnico_flutter/models/movie_response_model.dart';
 import 'package:desafio_tecnico_flutter/shared/config/http_config.dart';
-import 'package:desafio_tecnico_flutter/shared/database/db_provider.dart';
 import 'package:dio/dio.dart';
-// import 'package:dio/dio.dart' as _dio;
 
 class MovieService {
   final Dio _dio = Dio();
@@ -24,6 +22,21 @@ class MovieService {
       Response response =
           await _dio.get(_urlGetMoviesByGenre, queryParameters: params);
       return MovieResponseModel.fromJson(response.data);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<Movie> getMovieDetails(int movieId) async {
+    var params = {
+      "api_key": apiKey,
+      "language": "pt-BR",
+      "append_to_response": "credits"
+    };
+    try {
+      Response response = await _dio.get("$_urlGetMovieDetails/$movieId",
+          queryParameters: params);
+      return Movie.fromJson(response.data);
     } catch (e) {
       print(e);
     }
