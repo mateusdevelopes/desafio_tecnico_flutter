@@ -6,14 +6,14 @@ import 'package:dio/dio.dart';
 
 class MovieService {
   final Dio _dio = Dio();
-  final String apiKey = "3e2072000c4b87a8fa99e871dc24db80";
+
   var _urlGetMoviesByGenre = "${HttpConfig.apiUrl}/discover/movie";
   var _urlGetGenres = "${HttpConfig.apiUrl}/genre/movie/list";
   var _urlGetMovieDetails = "${HttpConfig.apiUrl}/movie";
 
   Future<MovieResponseModel> getMoviesByGenre(String genreId) async {
     var params = {
-      "api_key": apiKey,
+      "api_key": HttpConfig.apiKey,
       "language": "pt-BR",
       "page": 1,
       "with_genres": genreId
@@ -29,7 +29,7 @@ class MovieService {
 
   Future<Movie> getMovieDetails(int movieId) async {
     var params = {
-      "api_key": apiKey,
+      "api_key": HttpConfig.apiKey,
       "language": "pt-BR",
       "append_to_response": "credits"
     };
@@ -43,7 +43,7 @@ class MovieService {
   }
 
   Future<GenresResponseModel> getGenres() async {
-    var params = {"api_key": apiKey, "language": "pt-BR"};
+    var params = {"api_key": HttpConfig.apiKey, "language": "pt-BR"};
     try {
       Response response =
           await _dio.get(_urlGetGenres, queryParameters: params);

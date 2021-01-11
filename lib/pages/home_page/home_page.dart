@@ -3,6 +3,7 @@ import 'package:desafio_tecnico_flutter/models/genre_model.dart';
 import 'package:desafio_tecnico_flutter/models/movie_model.dart';
 import 'package:desafio_tecnico_flutter/models/movie_response_model.dart';
 import 'package:desafio_tecnico_flutter/pages/details_page/details_page.dart';
+import 'package:desafio_tecnico_flutter/pages/home_page/widgets/movie_item.dart';
 import 'package:desafio_tecnico_flutter/shared/services/movie_service.dart';
 import 'package:desafio_tecnico_flutter/shared/theme/design_colors.dart';
 import 'package:desafio_tecnico_flutter/widgets/ink_wrapper.dart';
@@ -19,14 +20,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Size preferredSize = Size.fromHeight(kToolbarHeight * 0.8);
   MovieResponseModel responseList;
-
+  TextEditingController searchController = new TextEditingController();
+  String searchString = '';
   int _selectedIndex = 0;
   int movieId = 12;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   Future<List<Genre>> getGenres() async {
     try {
@@ -44,6 +41,11 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print(e);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
@@ -75,12 +77,18 @@ class _HomePageState extends State<HomePage> {
                     color: Color(0xffF3F3F3),
                     borderRadius: BorderRadius.circular(50)),
                 child: TextFormField(
+                  onChanged: (value) {
+                    setState(() {
+                      searchString = value;
+                    });
+                  },
+                  controller: searchController,
                   decoration: InputDecoration(
                     icon: Icon(
                       Icons.search,
                       color: Colors.grey,
                     ),
-                    hintText: "email@teste.com",
+                    hintText: "Pesquisar filmes",
                     focusedBorder: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     errorBorder: InputBorder.none,
@@ -92,8 +100,19 @@ class _HomePageState extends State<HomePage> {
             FutureBuilder(
                 future: getGenres(),
                 builder: (context, snapshot) {
-                  return Expanded(
-                      flex: 1,
+                  if (ConnectionState.active != null && !snapshot.hasData) {
+                    return Center(
+                        child: Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator()));
+                  }
+
+                  if (ConnectionState.done != null && snapshot.hasError) {
+                    return Center(child: Text(snapshot.error));
+                  }
+
+                  return SizedBox(
+                      height: 90,
                       child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           itemCount: snapshot.data.length,
@@ -102,32 +121,40 @@ class _HomePageState extends State<HomePage> {
                               padding: EdgeInsets.symmetric(vertical: 24),
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: FlatButton(
-                                  color: _selectedIndex == index
-                                      ? DesignColors.COR_GENRE_TOGGLE
-                                      : Colors.white,
-                                  // disabledColor: Colors.amber,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: BorderSide(
-                                          color: _selectedIndex == index
-                                              ? DesignColors.COR_GENRE_TOGGLE
-                                              : Colors.grey)),
-                                  child: AutoSizeText(
-                                    snapshot.data[index].name,
-                                    style: TextStyle(
-                                      color: _selectedIndex == index
-                                          ? Colors.white
-                                          : DesignColors.COR_GENRE_TOGGLE,
-                                    ),
+                                child: Container(
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(60),
                                   ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedIndex = index;
-                                      movieId = snapshot.data[index].id;
-                                    });
-                                    print(snapshot.data[index].id);
-                                  },
+                                  child: FlatButton(
+                                    height: 20,
+                                    color: _selectedIndex == index
+                                        ? DesignColors.COR_GENRE_TOGGLE
+                                        : Colors.white,
+                                    // disabledColor: Colors.amber,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(60.0),
+                                        side: BorderSide(
+                                            color: _selectedIndex == index
+                                                ? DesignColors.COR_GENRE_TOGGLE
+                                                : Colors.grey)),
+                                    child: AutoSizeText(
+                                      snapshot.data[index].name,
+                                      style: TextStyle(
+                                        color: _selectedIndex == index
+                                            ? Colors.white
+                                            : DesignColors.COR_GENRE_TOGGLE,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedIndex = index;
+                                        movieId = snapshot.data[index].id;
+                                      });
+                                      print(snapshot.data[index].id);
+                                    },
+                                  ),
                                 ),
                               ),
                             );
@@ -144,86 +171,37 @@ class _HomePageState extends State<HomePage> {
     return FutureBuilder<List<Movie>>(
         future: getMoviesByGenres(id),
         builder: (context, snapshot) {
+          if (ConnectionState.active != null && !snapshot.hasData) {
+            return Center(
+              child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator()),
+            );
+          }
+
+          if (ConnectionState.done != null && snapshot.hasError) {
+            return Center(child: Text(snapshot.error));
+          }
+
           return Expanded(
             flex: 6,
             child: ListView.builder(
                 itemCount: snapshot.data.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: EdgeInsets.all(10),
-                    child: InkWrapper(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => DetailsPage(
-                              id: snapshot.data[index].id,
-                              title: snapshot.data[index].title,
-                              poster: snapshot.data[index].poster,
-                            ),
+                  return snapshot.data[index].title.contains(searchString)
+                      ? MovieItem(
+                          id: snapshot.data[index].id,
+                          title: snapshot.data[index].title,
+                          poster: snapshot.data[index].poster,
+                          detail: snapshot.data[index].originalTitle,
+                          width: width,
+                        )
+                      : Center(
+                          child: Container(
+                            padding: EdgeInsets.all(20),
+                            child: CircularProgressIndicator(),
                           ),
                         );
-                      },
-                      radius: 10,
-                      child: Hero(
-                        tag: 'tag' + snapshot.data[index].title,
-                        child: Container(
-                          height: 600,
-                          width: width,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                                image: new NetworkImage(
-                                    "https://image.tmdb.org/t/p/w500${snapshot.data[index].poster}"),
-                                fit: BoxFit.fill),
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Container(
-                            width: width,
-                            height: 500,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              gradient: LinearGradient(
-                                  colors: [Colors.transparent, Colors.black],
-                                  begin: FractionalOffset(0, 0.7),
-                                  end: FractionalOffset(0, 1),
-                                  stops: [0.0, 0.8],
-                                  tileMode: TileMode.clamp),
-                            ),
-                            child: Stack(
-                              alignment: Alignment.bottomLeft,
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.all(10),
-                                  child: Wrap(
-                                    direction: Axis.vertical,
-                                    spacing: 20,
-                                    children: [
-                                      AutoSizeText(
-                                        snapshot.data[index].title,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w900),
-                                      ),
-                                      AutoSizeText(
-                                        snapshot.data[index].releaseDate
-                                            .toString(),
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w900),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
                 }),
           );
         });

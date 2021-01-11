@@ -1,3 +1,3 @@
 class DesignFont {
-  static const String montserrat = 'Montserra';
+  static const String montserrat = 'Montserrat';
 }

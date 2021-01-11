@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:desafio_tecnico_flutter/models/cast_model.dart';
 import 'package:desafio_tecnico_flutter/models/crew_model.dart';
 import 'package:desafio_tecnico_flutter/models/movie_model.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/back_button_details.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/budget_section.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/description_section.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/image_poster.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/movie_details_flag.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/movie_title.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/original_movie_title.dart';
+import 'package:desafio_tecnico_flutter/pages/details_page/widgets/vote_average_scale.dart';
 import 'package:desafio_tecnico_flutter/shared/services/movie_service.dart';
 import 'package:desafio_tecnico_flutter/shared/theme/design_colors.dart';
 import 'package:desafio_tecnico_flutter/shared/theme/design_fonts.dart';
-import 'package:desafio_tecnico_flutter/widgets/ink_wrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_money_formatter/flutter_money_formatter.dart';
 
 class DetailsPage extends StatefulWidget {
   final int id;
@@ -21,13 +29,7 @@ class DetailsPage extends StatefulWidget {
 }
 
 class _DetailsPageState extends State<DetailsPage> {
-  int directorListLenght = 3;
-
-  @override
-  void initState() {
-    // resq();
-    super.initState();
-  }
+  int directorListLenght = 1;
 
   Future<Movie> getMovieDetailsByID(int id) async {
     try {
@@ -44,6 +46,7 @@ class _DetailsPageState extends State<DetailsPage> {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: Size(width, 0),
         child: AppBar(
@@ -56,9 +59,32 @@ class _DetailsPageState extends State<DetailsPage> {
           FutureBuilder(
               future: getMovieDetailsByID(widget.id),
               builder: (context, snapshot) {
+                if (ConnectionState.active != null && !snapshot.hasData) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (ConnectionState.done != null && snapshot.hasError) {
+                  return Center(child: Text(snapshot.error));
+                }
+
+                List<Crew> filteredList = snapshot.data.credits.crew
+                    .where((element) => element.job == "Director")
+                    .toList();
+                print("TEM ${filteredList.length}");
+
                 var runtimeFormated =
                     snapshot.data.runtime.toString().split("");
-                print(runtimeFormated);
+                var fmf = FlutterMoneyFormatter(
+                    amount: snapshot.data.budget.toDouble(),
+                    settings: MoneyFormatterSettings(
+                        thousandSeparator: '.',
+                        decimalSeparator: ',',
+                        symbolAndNumberSeparator: ' ',
+                        fractionDigits: 3,
+                        compactFormatType: CompactFormatType.short));
+
                 return Container(
                   color: DesignColors.COLOR_WHITE_DARK,
                   child: Padding(
@@ -68,8 +94,9 @@ class _DetailsPageState extends State<DetailsPage> {
                       height: height,
                       decoration: BoxDecoration(color: Colors.white),
                       child: Container(
+                        height: height,
                         padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                        child: SizedBox(
+                        child: Container(
                           height: height,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -78,58 +105,14 @@ class _DetailsPageState extends State<DetailsPage> {
                               SizedBox(
                                 height: 100,
                               ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  AutoSizeText(
-                                    "${snapshot.data.voteAverage} ",
-                                    style: TextStyle(
-                                        fontFamily: DesignFont.montserrat,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 24),
-                                  ),
-                                  AutoSizeText(
-                                    "/ 10",
-                                    style: TextStyle(
-                                        fontFamily: DesignFont.montserrat,
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 14),
-                                  ),
-                                ],
+                              VoteAverageScale(
+                                voteAverage: "${snapshot.data.voteAverage} ",
                               ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 30, bottom: 15),
-                                child: Container(
-                                  child: AutoSizeText(
-                                    snapshot.data.title,
-                                    style: TextStyle(
-                                        fontFamily: DesignFont.montserrat,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 18),
-                                  ),
-                                ),
+                              MovieTitle(
+                                title: snapshot.data.title,
                               ),
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 20),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    AutoSizeText(
-                                      "Titulo original: ",
-                                      style: TextStyle(
-                                          fontFamily: DesignFont.montserrat,
-                                          fontWeight: FontWeight.w300,
-                                          fontSize: 13),
-                                    ),
-                                    AutoSizeText(
-                                      snapshot.data.originalTitle,
-                                      style: TextStyle(
-                                          fontFamily: DesignFont.montserrat,
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 13),
-                                    ),
-                                  ],
-                                ),
+                              OriginalMovieTitle(
+                                title: snapshot.data.originalTitle,
                               ),
                               Container(
                                 width: width,
@@ -139,108 +122,74 @@ class _DetailsPageState extends State<DetailsPage> {
                                   alignment: WrapAlignment.center,
                                   spacing: 20,
                                   children: [
-                                    Container(
-                                      color: DesignColors.COLOR_LIGHT_BLUE,
-                                      padding: EdgeInsets.all(12),
-                                      child: Wrap(
-                                        children: [
-                                          AutoSizeText(
-                                            "Ano: ",
-                                            style: TextStyle(
-                                                fontFamily:
-                                                    DesignFont.montserrat,
-                                                fontWeight: FontWeight.w300,
-                                                fontSize: 16),
-                                          ),
-                                          AutoSizeText(
-                                            snapshot.data.releaseDate
-                                                .substring(0, 4),
-                                            style: TextStyle(
-                                                fontFamily:
-                                                    DesignFont.montserrat,
-                                                fontWeight: FontWeight.w400,
-                                                fontSize: 16),
-                                          ),
-                                        ],
-                                      ),
+                                    MovieDetailsFlag(
+                                      name: "Duração: ",
+                                      runtimeFormated: snapshot.data.releaseDate
+                                          .substring(0, 4),
                                     ),
-                                    Container(
-                                      color: DesignColors.COLOR_LIGHT_BLUE,
-                                      padding: EdgeInsets.all(12),
-                                      child: Wrap(
-                                        children: [
-                                          AutoSizeText(
-                                            "Duração: ",
-                                            style: TextStyle(
-                                                fontFamily:
-                                                    DesignFont.montserrat,
-                                                fontWeight: FontWeight.w300,
-                                                fontSize: 16),
-                                          ),
-                                          AutoSizeText(
-                                            "${runtimeFormated[0]}h ${runtimeFormated[1]}${runtimeFormated[2]} min",
-                                            style: TextStyle(
-                                                fontFamily:
-                                                    DesignFont.montserrat,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 16),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                    MovieDetailsFlag(
+                                        name: "Ano: ",
+                                        runtimeFormated:
+                                            "${runtimeFormated[0]}h ${runtimeFormated[1]}${runtimeFormated[2]} min"),
                                   ],
                                 ),
                               ),
-                              Wrap(
-                                children: [],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding:
-                                        EdgeInsets.only(top: 20, bottom: 10),
-                                    child: AutoSizeText(
-                                      "Descrição",
-                                      style: TextStyle(
-                                          fontFamily: DesignFont.montserrat,
-                                          fontWeight: FontWeight.w300,
-                                          fontSize: 16),
-                                    ),
-                                  ),
-                                  AutoSizeText(
-                                    snapshot.data.overview,
-                                    style: TextStyle(
-                                        fontFamily: DesignFont.montserrat,
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 20, bottom: 5),
-                                child: Container(
-                                  padding: EdgeInsets.all(12),
-                                  color: DesignColors.COLOR_LIGHT_BLUE,
-                                  child: Row(
-                                    children: [
-                                      AutoSizeText(
-                                        "ORÇAMENTO: ",
-                                        style: TextStyle(
-                                            fontFamily: DesignFont.montserrat,
-                                            fontWeight: FontWeight.w300,
-                                            fontSize: 16),
-                                      ),
-                                      AutoSizeText(
-                                        "\$ ${snapshot.data.budget.toString()}",
-                                        style: TextStyle(
-                                            fontFamily: DesignFont.montserrat,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 16),
-                                      ),
-                                    ],
+                              Container(
+                                alignment: Alignment.centerLeft,
+                                margin: EdgeInsets.only(bottom: 20),
+                                child: Center(
+                                  child: SizedBox(
+                                    height: 120,
+                                    width: width - 100,
+                                    child: GridView.builder(
+                                        gridDelegate:
+                                            new SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 3,
+                                          childAspectRatio: 2,
+                                        ),
+                                        scrollDirection: Axis.vertical,
+                                        itemCount: snapshot.data.genres.length,
+                                        itemBuilder: (context, index) {
+                                          return Padding(
+                                            padding: EdgeInsets.all(5),
+                                            child: Container(
+                                              height: 20,
+                                              child: ButtonTheme(
+                                                minWidth: 180.0,
+                                                height: 20.0,
+                                                hoverColor: DesignColors
+                                                    .COLOR_LIGHT_BLUE,
+                                                padding: EdgeInsets.all(10),
+                                                child: RaisedButton(
+                                                  onPressed: () {},
+                                                  elevation: 0,
+                                                  color: DesignColors
+                                                      .COLOR_LIGHT_BLUE,
+                                                  child: AutoSizeText(
+                                                    "${snapshot.data.genres[index].name}",
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                        fontFamily: DesignFont
+                                                            .montserrat,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        fontSize: 14),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
                                   ),
                                 ),
+                              ),
+                              DescriptionSection(
+                                description: snapshot.data.overview,
+                              ),
+                              BudgetSection(
+                                fmf: "${fmf.output.symbolOnLeft}",
+                                name: "ORÇAMENTO: ",
                               ),
                               Padding(
                                 padding: EdgeInsets.only(bottom: 20),
@@ -309,15 +258,8 @@ class _DetailsPageState extends State<DetailsPage> {
                                         height: 20,
                                         child: ListView.builder(
                                             scrollDirection: Axis.horizontal,
-                                            itemCount: directorListLenght,
+                                            itemCount: filteredList.length,
                                             itemBuilder: (context, index) {
-                                              List<Crew> filteredList = snapshot
-                                                  .data.credits.crew
-                                                  .where((element) =>
-                                                      element.job == 'Director')
-                                                  .toList();
-                                              directorListLenght =
-                                                  filteredList.length;
                                               return AutoSizeText(
                                                 "${filteredList[index].name}, ",
                                                 style: TextStyle(
@@ -352,14 +294,12 @@ class _DetailsPageState extends State<DetailsPage> {
                                     Container(
                                       width: width,
                                       child: SizedBox(
-                                        height: 20,
+                                        height: 60,
                                         child: ListView.builder(
                                             scrollDirection: Axis.horizontal,
                                             itemCount: snapshot
-                                                .data.credits.cast.lenght,
+                                                .data.credits.cast.length,
                                             itemBuilder: (context, index) {
-                                              List<Cast> filteredList =
-                                                  snapshot.data.credits.cast;
                                               return AutoSizeText(
                                                 "${snapshot.data.credits.cast[index].name}, ",
                                                 style: TextStyle(
@@ -382,42 +322,7 @@ class _DetailsPageState extends State<DetailsPage> {
                   ),
                 );
               }),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(20),
-                  child: InkWrapper(
-                      radius: 60,
-                      child: Material(
-                        elevation: 1,
-                        borderRadius: BorderRadius.circular(60),
-                        child: Container(
-                            padding: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(60),
-                              color: Colors.white,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.arrow_back_ios,
-                                  color: Colors.black,
-                                ),
-                                AutoSizeText("Voltar")
-                              ],
-                            )),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                      }),
-                ),
-              ],
-            ),
-          ),
+          BackButtonDetails(),
           Align(
             alignment: Alignment.topCenter,
             child: Container(
@@ -434,37 +339,6 @@ class _DetailsPageState extends State<DetailsPage> {
             ),
           ),
         ]),
-      ),
-    );
-  }
-}
-
-class ImagePoster extends StatelessWidget {
-  const ImagePoster({
-    Key key,
-    @required this.title,
-    @required this.width,
-    @required this.poster,
-  }) : super(key: key);
-
-  final String title;
-  final double width;
-  final String poster;
-
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: 'tag' + title,
-      child: Container(
-        height: 300,
-        width: 200,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-              image: new NetworkImage("https://image.tmdb.org/t/p/w500$poster"),
-              fit: BoxFit.fill),
-          color: Colors.grey,
-          borderRadius: BorderRadius.circular(10),
-        ),
       ),
     );
   }
